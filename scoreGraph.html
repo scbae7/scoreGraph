@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>점수 그래프</title>
+    <link rel="icon" href="./img/graph.png">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link href="https://webfontworld.github.io/gmarket/GmarketSans.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            font-family: GmarketSans, serif;
+        }
+
+        body {
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .wrap {
+            width: 1600px;
+            height: 696px;
+            border-radius: 10px;
+            border: 2px solid #41227F;
+            background-color: #FACCFF;
+            box-shadow: 6px 4px 15px 2px #41227F;
+            position: relative;
+        }
+
+        .mainTitle {
+            font-weight: bold;
+            height: 80px;
+            font-size: 50px;
+            color: #41227F;
+            background-color: #A178DF;
+            border-top-left-radius: 7px;
+            border-top-right-radius: 7px;
+            border-bottom: 3px dashed #41227F;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #myCanvas {
+            border-bottom: 3px dashed #41227F;
+            border-top: 0;
+            background-color: #fff;
+        }
+
+        .content {
+            display: flex;
+            width: 100%;
+        }
+
+        .scoreCont {
+            width: 70%;
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            font-size: 24px;
+        }
+
+        .inputCont {
+            display: flex;
+            padding: 20px;
+            width: 30%;
+            height: 60px;
+
+        }
+
+        .leftCont {
+            width: 45%;
+            font-size: 20px;
+            border-radius: 6px;
+            margin-right: 16px;
+            border: 1px solid #41227F;
+        }
+
+        .reDrawBtn {
+            width: 40%;
+            font-size: 20px;
+            border: 1px solid #41227F;
+            background-color: #A178DF;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .alertModule {
+            position: absolute;
+            width: 400px;
+            height: 270px;
+            top: 430px;
+            left: 1200px;
+            background-color: #fff;
+            box-shadow: 0 0 20px black;
+            border-radius: 20px;
+            border: 2px solid #000;
+            display: none;
+            z-index: 100;
+        }
+
+        .moduleHeader {
+            width: 100%;
+            height: 70px;
+            background: #A178DF;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top-left-radius: 17px;
+            border-top-right-radius: 17px;
+            border-bottom: 4px dashed #41227F;
+            font-size: 32px;
+            color: #fff;
+        }
+
+        .moduleBody {
+            width: 100%;
+            height: 197px;
+            background: #DCB0FF;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+
+        .bodyContent {
+            width: 90%;
+            height: 90%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        .closeAlert {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+            color: #41227F;
+            border: 1px solid #41227F;
+            cursor: pointer;
+            position: relative;
+            left: 32px;
+        }
+
+        .closeAlert span {
+            position: absolute;
+            top: 7px;
+            left: 7px;
+        }
+
+        body {
+            position: relative;
+            z-index: 1;
+        }
+
+        .popUp {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            background-color: gray;
+            opacity: 0.01;
+            z-index: 10;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="popUp" class="popUp"></div>
+    <div class="wrap">
+        <header class="mainTitle">SCORE GRAPH</header>
+        <canvas id="myCanvas" width="1600" height="500"></canvas>
+        <main class="content">
+            <section class="scoreCont">
+                <p id="studentMax"></p>
+                <p id="studentMin"></p>
+                <p id="studentAvg"></p>
+                <p id="studentMed"></p>
+            </section>
+            <section class="inputCont">
+                <input id="leftCont" class="leftCont" type="number" placeholder="2~30 입력" min="2" max="30">
+                <button id="reDrawBtn" class="reDrawBtn">다시 그리기</button>
+            </section>
+        </main>
+        <div id="alertModule" class="alertModule">
+            <div class="moduleHeader">
+                <span>경고창</span>
+                <button id="closeAlert" class="closeAlert">
+                    <span class="material-symbols-outlined">
+                        close
+                    </span>
+                </button>
+            </div>
+            <div class="moduleBody">
+                <div class="bodyContent">
+                    <div id="alertModuleText"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./js/modal.js"></script>
+    <script>
+        class Graph {
+            constructor(id) {
+                this.id = id;
+                this.myCanvas = document.getElementById('myCanvas');
+                this.reDrawBtn = document.getElementById('reDrawBtn');
+                this.studentMax = document.getElementById('studentMax');
+                this.studentMin = document.getElementById('studentMin');
+                this.studentAvg = document.getElementById('studentAvg');
+                this.studentMed = document.getElementById('studentMed');
+                this.canvasPen = myCanvas.getContext('2d');
+                this.canvasWidth = myCanvas.width;
+                this.canvasHeight = myCanvas.height;
+                this.randomScores = [];
+                this.counts = [];
+                this.scoreRad = [];
+                this.angles = 0;
+
+                this.colorGraph = ['#FF6B6B', '#77DD77', '#6A5ACD', '#FFD700', '#9370DB', '#FFA07A', '#20B2AA',
+                    '#FF6347', '#87CEEB', '#FFA500'
+                ];
+                this.studentName = [
+                    '지원', '세은', '민우', '현서', '지율', '현지', '서연', '민준', '하윤', '도윤',
+                    '혜린', '태민', '서준', '지우', '승현',
+                    '현우', '은서', '도현', '예린', '준서',
+                    '혜원', '민서', '서현', '다은', '예은', '준우', '지안', '민지', '다현', '지호'
+                ];
+
+                document.getElementById('leftCont').addEventListener('blur', function (event) {
+                    const value = (event.target.value);
+                    if (isNaN(value)) {
+                        event.target.value = '';
+                    } else if (value < 2) {
+                        event.target.value = 2;
+                    } else if (value > 30) {
+                        event.target.value = 30;
+                    }
+                })
+
+                this.reDrawBtn.onclick = () => {
+                    let inputNum = document.getElementById('leftCont').value
+                    this.randomScores = [];
+                    this.counts = [];
+                    this.canvasPen.clearRect(0, 0, 1600, 500);
+                    if (isNaN(inputNum) || inputNum > 30) {
+                        inputNum = 30;
+                        alertString(`2~30 사이의 숫자만 <br>입력해주세요.<br>최대 30으로 설정됩니다.`);
+                    } else if (inputNum < 2) {
+                        inputNum = 2;
+                        alertString(`2~30 사이의 숫자만 <br>입력해주세요.<br>최소 2로 설정됩니다.`);
+                    }
+                    this.randomScorePush(inputNum);
+                    this.accumulateRandomScore();
+                    this.pieGraphCal();
+                    this.drawPieGraph();
+                    this.drawLineGraph();
+                    this.writeInfo();
+                }
+                const inputEl = document.getElementById('leftCont');
+
+                inputEl.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter') {
+                        this.reDrawBtn.onclick();  // 버튼 클릭 이벤트 강제 실행
+                    }
+                });
+            }
+            // 랜덤값 생성
+            randomScorePush(number) {
+                for (let i = 0; i < number; i++) {
+                    this.randomScores.push(Math.floor(Math.random() * (100 - 20 + 1)) + 20);
+                }
+                console.log(this.randomScores);
+            }
+            // 범위에 맞게 카운트
+            accumulateRandomScore() {
+                // 0으로 된 배열 10개 생성
+                this.counts = Array(10).fill(0);
+                this.randomScores.forEach(score => {
+                    if (score >= 1 && score <= 10) {
+                        this.counts[0]++;
+                    } else if (score >= 11 && score <= 20) {
+                        this.counts[1]++;
+                    } else if (score >= 21 && score <= 30) {
+                        this.counts[2]++;
+                    } else if (score >= 31 && score <= 40) {
+                        this.counts[3]++;
+                    } else if (score >= 41 && score <= 50) {
+                        this.counts[4]++;
+                    } else if (score >= 51 && score <= 60) {
+                        this.counts[5]++;
+                    } else if (score >= 61 && score <= 70) {
+                        this.counts[6]++;
+                    } else if (score >= 71 && score <= 80) {
+                        this.counts[7]++;
+                    } else if (score >= 81 && score <= 90) {
+                        this.counts[8]++;
+                    } else if (score >= 91 && score <= 100) {
+                        this.counts[9]++;
+                    }
+                });
+            }
+            writeInfo() {
+
+                this.studentMaxValue = this.randomScores.reduce((acc, curr) => {
+                    return Math.max(acc, curr);
+                }, -Infinity);
+                this.studentMinValue = this.randomScores.reduce((acc, curr) => {
+                    return Math.min(acc, curr);
+                }, Infinity);
+                this.studentSumValue = this.randomScores.reduce((acc, curr) => {
+                    let studentSum = acc + curr;
+                    return studentSum;
+                });
+                console.log(`avg:`, this.studentSumValue / this.randomScores.length);
+                let studentAvgValue = (this.studentSumValue / this.randomScores.length).toFixed(2);
+                console.log(studentAvgValue);
+                let sortScore = this.randomScores.sort();
+                if (sortScore.length % 2 == 0) {
+                    let sortIndex = Math.floor(sortScore.length / 2);
+                    let scoreMedValue = (sortScore[sortIndex - 1] + sortScore[sortIndex]) / 2;
+                    this.studentMed.innerHTML = `중위값 : ${scoreMedValue}`;
+                } else if (sortScore.length % 2 == 1) {
+                    let sortIndex = Math.floor(sortScore.length / 2);
+                    let scoreMedValue = sortScore[sortIndex];
+                    this.studentMed.innerHTML = `중위값 : ${scoreMedValue}`;
+                }
+                this.studentMax.innerHTML = `최댓값 : ${this.studentMaxValue}`;
+                this.studentMin.innerHTML = `최솟값 : ${this.studentMinValue}`;
+                this.studentAvg.innerHTML = `평균값 : ${studentAvgValue}`;
+            }
+            pieGraphCal() {
+                let scoreDegree = 360 / this.counts.length;
+                for (let i = 0; i < this.counts.length; i++) {
+                    this.scoreRad[i] = (this.counts[i] * scoreDegree) * (Math.PI / 180);
+                }
+                let sum = this.scoreRad.reduce((acc, curr) => acc + curr, 0);
+                this.angles = this.scoreRad.map(score => ((360 / sum) * score));
+            }
+            drawPieGraph() {
+                let pieDot = (x, y, a, b, color = '#41227F') => {
+                    this.canvasPen.fillStyle = color;
+                    this.canvasPen.fillRect(250 + x, 250 - y, a, b);
+                }
+                let startAngle = 0;
+                for (let i = 0; i < this.scoreRad.length; i++) {
+                    let endAngle = startAngle + this.angles[i];
+                    let color = this.colorGraph[i];
+
+                    // 원 구분선 그리기
+                    // let rad1 = (endAngle * (Math.PI / 180));
+                    // for(let j=185; j<200; j++){
+                    //     pieDot(Math.cos(rad1)*j, Math.sin(rad1)*j,1,1,color);
+                    // }
+
+                    // 원그리기
+                    // for (let k = 0; k < this.angles[i]; k++) {
+                    //     let rad2 = (startAngle + (k)) * (Math.PI / 180);
+                    //     for (let l = 100; l < 130; l++) {
+                    //         pieDot(Math.cos(rad2) * l, Math.sin(rad2) * l, 2, 2, color);
+                    //     }
+                    // }
+                    let dotCount = (this.angles[i] / (360 / 600));
+                    for (let k = 0; k < dotCount; k++) {
+                        let rad2 = (startAngle + (k * (360 / 600))) * (Math.PI / 180);
+                        for (let l = 100; l < 130; l++) {
+                            pieDot(Math.cos(rad2) * l, Math.sin(rad2) * l, 2, 2, color);
+                        }
+                    }
+
+                    // 텍스트 넣기 각도 1/2 위치
+                    let textRad = (startAngle + (this.angles[i]) / 2) * (Math.PI / 180);
+                    let textX = (Math.cos(textRad) * 180) + 215;
+                    let textY = -(Math.sin(textRad) * 180) + 245;
+
+                    this.canvasPen.fillStyle = '#000';
+                    this.canvasPen.font = '14px GmarketSans';
+                    this.canvasPen.fillStyle = color;
+                    if (this.counts[i] > 0) {
+                        this.canvasPen.fillText(`${(i*10)+1}~${(i+1)*10} : ${this.counts[i]}개`, textX, textY);
+                    }
+
+                    startAngle = endAngle;
+                }
+            }
+
+            drawLineGraph() {
+                let lineDot = (x, y, a, b, color = '#41227f') => {
+                    this.canvasPen.fillStyle = color;
+                    this.canvasPen.fillRect(x + 500, (-1 * y) + this.canvasHeight, a, b);
+                }
+                for (let i = 0; i < this.canvasWidth - 40; i++) {
+                    lineDot(i, 40, 1, 1);
+                    lineDot(0, i, 1, 1);
+                }
+                for (let i = 40; i < 440; i = i + 40) {
+                    this.canvasPen.font = '14px GmarketSans';
+                    this.canvasPen.fillText(i / 4, 505, -i + 464);
+                }
+                for (let i = 0; i < 1100; i = i + 5) {
+                    for (let j = 60; j < 500; j = j + 20) {
+                        lineDot(i, j, 1, 1);
+                    }
+                }
+                for (let i = 0; i < this.randomScores.length; i++) {
+                    let x = (i * (1000 / (this.randomScores.length))) + 40;
+                    let y = (this.randomScores[i] * 4) + 40;
+                    this.canvasPen.font = '14px GmarketSans';
+                    this.canvasPen.fillText(this.randomScores[i], x + 500, (-1 * y) + 500);
+
+                    this.canvasPen.fillStyle = '#41227F';
+                    this.canvasPen.font = '16px';
+                    this.canvasPen.fillText(this.studentName[i], x + 500, 485);
+
+                    let prevX = ((i - 1) * (1000 / (this.randomScores.length))) + 40;
+                    let prevY = (this.randomScores[i - 1] * 4) + 40;
+
+                    let z = Math.sqrt(((x - prevX) ** 2) + ((y - prevY) ** 2));
+
+                    let dx = x - prevX;
+                    let dy = y - prevY;
+                    let radian = Math.atan2(dy, dx);
+
+                    for (let j = 0; j < z; j++) {
+                        lineDot(prevX + (Math.cos(radian) * j), prevY + (Math.sin(radian) * j), 1, 1, "#41227F");
+                    }
+                }
+                // calculateSlope=(x1, y1, x2, y2)=> {
+                //     return (y2 - y1) / (x2 - x1);
+                // }
+                //기울기 계산
+                // console.log(x + " " + y + " " + prevX + " " + prevY)
+                // let slope = calculateSlope(prevX, prevY, x, y);
+                // console.log(slope);
+                // for (let j=prevX; j<x; j++) {
+                //     newY = prevY + (slope*(j-prevX))
+                //     console.log(newY)
+                //     plotXY(j, newY, 1, 1);
+                // }
+                // 기울기로 구하는 방법인데 점이 이쁘게 안 나옴
+            }
+
+
+        }
+        const myGraph = new Graph('myGraph');
+        myGraph.randomScorePush(30);
+        myGraph.accumulateRandomScore();
+        myGraph.pieGraphCal();
+        myGraph.drawPieGraph();
+        myGraph.drawLineGraph();
+        myGraph.writeInfo();
+    </script>
+</body>
+
+</html>
